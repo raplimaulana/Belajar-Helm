@@ -1,0 +1,69 @@
+### WRITING GO TEMPLATES ###
+
+#create new blank helm template 
+cd my-cluster-config
+helm create rapli-helm-chart        #this will create chart.yaml, chart, templates and values.yaml
+cd rapli-helm-chart 
+
+#writing yaml in folder templates
+vim templates/one.yaml
+
+hello
+  world: {{ print "false" }}
+
+#create template 
+helm template .
+
+---
+### Example Helm ###
+##create values
+vim values.yaml
+
+#numberOfWebAppReplicas: 4
+
+webapp:
+  numberOfWebAppReplicas: 4
+
+##create yaml
+vim templates/rapli-full.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  test-pod-rapli
+  namespace: testing
+spec:
+  #replicas: {{ .Values.numberOfWebAppReplicas }}
+  replicas: {{ .Values.webapp.numberOfWebAppReplicas }}
+  selector:
+    matchLabels:
+      app: test-pod-rapli
+  template:
+    metadata:
+      labels:
+        app: test-pod-rapli
+    spec:
+      containers:
+      - name: test-pod-rapli
+        image: raplimaulana/test-pod-rapli:v1.0.0-dev
+	    imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+          name: 80tcp
+          protocol: TCP
+        resources:
+          limits:
+            cpu: "4"
+            memory: 4Gi
+          requests:
+            cpu: 300m
+            memory: 512Mi
+      imagePullSecrets:
+      - name: pjli-hosting
+      restartPolicy: Always
+    restartPolicy: Always
+
+#create template 
+helm lint .
+helm template .
+helm template --set webapp.numberOfWebAppReplicas=4 .

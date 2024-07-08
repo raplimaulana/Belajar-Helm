@@ -1,0 +1,12 @@
+### GENERATING YAML ###
+Sometimes we need yaml file only for apply to cluster kubernetes.
+Helm have feature template for convert chart into yaml file.
+
+##generate yaml file
+cd my-cluster-config
+helm lint .
+helm template monitoring /prometheus/
+helm template monitoring /prometheus/ --values=/prometheus/values.yaml
+helm template monitoring /prometheus/ --values=/prometheus/values.yaml > monitoring-prometheus.yaml
+
+kubectl apply -f monitoring-prometheus.yaml

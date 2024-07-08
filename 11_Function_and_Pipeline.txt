@@ -1,0 +1,400 @@
+### FUNCTION AND PIPELINE ###
+One of the powerfull features of the template language is its concepts of piplines (|).
+Concept from UNIX, pipelines are tool for chainig together a series of template commands to compactly express a series of a transformations.
+
+*visit https://helm.sh/docs/chart_template_guide/function_list/
+
+#logic function
+1. and
+   Returns the boolean AND of two or more arguments (the first empty argument, or the last argument).
+
+   and .Arg1 .Arg2
+
+2. or
+   Returns the boolean OR of two or more arguments (the first non-empty argument, or the last argument).
+
+   or .Arg1 .Arg2
+
+3. not
+   Returns the boolean negation of its argument.
+
+   not .Arg
+
+4. eq
+   Returns the boolean equality of the arguments (e.g., Arg1 == Arg2).
+
+   eq .Arg1 .Arg2
+
+5. ne
+   Returns the boolean inequality of the arguments (e.g., Arg1 != Arg2)
+
+   ne .Arg1 .Arg2
+
+6. lt
+   Returns a boolean true if the first argument is less than the second. False is returned otherwise (e.g., Arg1 < Arg2).
+
+   lt .Arg1 .Arg2
+
+7. le
+   Returns a boolean true if the first argument is less than or equal to the second. False is returned otherwise (e.g., Arg1 <= Arg2).
+
+   le .Arg1 .Arg2
+
+8. gt
+   Returns a boolean true if the first argument is greater than the second. False is returned otherwise (e.g., Arg1 > Arg2).
+
+   gt .Arg1 .Arg2
+
+9. ge
+   Returns a boolean true if the first argument is greater than or equal to the second. False is returned otherwise (e.g., Arg1 >= Arg2).
+
+   ge .Arg1 .Arg2
+
+
+#string functions
+1. quote 
+   wraps with double quotes to given string, if you give pizza as input the output will be "pizza".
+    
+   - usage
+ 
+     #values.yaml 
+     favorite:
+       drink: coffe
+       food: pizza 
+      
+     #deployment.yaml 
+     apiVersion: v1
+     kind: ConfigMap
+     metadata:
+       name: {{ .Release.Name }}-configmap
+     data:
+       myvalue: "Hello World"
+       drink: {{ quote .Values.favorite.drink }}
+       food: {{ quote .Values.favorite.food }}
+      
+   - output:
+ 
+     apiVersion: v1
+     kind: ConfigMap
+     metadata:
+       name: trendsetting-p-configmap
+     data:
+       myvalue: "Hello World"
+       drink: "coffee"
+       food: "Pizza"
+      
+2. repeat
+   The repeat function will echo the given string the given number of times.
+ 
+   - usage:
+ 
+     #values.yaml 
+     favorite:
+       drink: coffe
+       food: pizza 
+      
+     #deployment.yaml 
+     apiVersion: v1
+     kind: ConfigMap
+     metadata:
+       name: {{ .Release.Name }}-configmap
+     data:
+       myvalue: "Hello World"
+       drink: {{ .Values.favorite.drink | repeat 5 | quote }}
+ 
+   - output: 
+ 
+     apiVersion: v1
+     kind: ConfigMap
+     metadata:
+       name: melting-porcup-configmap
+     data:
+       myvalue: "Hello World"
+       drink: "coffeecoffeecoffeecoffeecoffee"
+      
+      
+3. upper 
+   Converts given string to uppercase. 
+
+   - usage:
+
+     #values.yaml 
+     favorite:
+       drink: coffe
+       food: pizza 
+      
+     #deployment.yaml 
+     apiVersion: v1
+     kind: ConfigMap
+     metadata:
+       name: {{ .Release.Name }}-configmap
+     data:
+       myvalue: "Hello World"
+       drink: {{ .Values.favorite.drink | quote }}
+       food: {{ .Values.favorite.food | upper | quote }}
+      
+   - output:
+
+     apiVersion: v1
+     kind: ConfigMap
+     metadata:
+       name: trendsetting-p-configmap
+     data:
+       myvalue: "Hello World"
+       drink: "coffee"
+       food: "PIZZA"
+
+4. lower 
+   Converts given string to lowercase.
+
+   - usage:
+
+     #values.yaml 
+     favorite:
+       drink: coffe
+       food: pizza 
+      
+     #deployment.yaml 
+     apiVersion: v1
+     kind: ConfigMap
+     metadata:
+       name: {{ .Release.Name }}-configmap
+     data:
+       myvalue: "Hello World"
+       drink: {{ .Values.favorite.drink | quote }}
+       food: {{ .Values.favorite.food | lower | quote }}
+      
+   - output:
+
+     apiVersion: v1
+     kind: ConfigMap
+     metadata:
+       name: trendsetting-p-configmap
+     data:
+       myvalue: "Hello World"
+       drink: "coffee"
+       food: "pizza"
+      
+5. include 
+   The include function allows you to bring in another template, and then pass the results to other template functions.
+   For example, this template snippet includes a template called mytpl, then lowercases the result, then wraps that in double quotes.
+
+   - usage:
+     
+     #_helpers.tpl
+     {{- define "mychart.fullname" -}}
+     {{- if .Values.fullnameOverride }}
+     {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+     {{- else }}
+     {{- $name := default .Chart.Name .Values.nameoverride }}
+     {{- if contains $name .Release.Name }}
+     {{- .Release.Name | trunc 63 | trimSuffix "-" }}
+     {{- else }}
+     {{- printf "%s-%s" .Release.Name | trunc 63 | trimSuffix "-"}}
+
+     #values.yaml 
+     favorite:
+       drink: coffe
+       food: pizza
+
+     #deployment.yaml 
+     apiVersion: v1
+     kind: ConfigMap
+     metadata:
+       name: {{- include "mychart.fullname" . | nindent 6 }}
+
+   - output:
+     apiVersion: v1
+     kind: ConfigMap
+     metadata:
+       name: trendsetting-p-configmap
+
+6. required 
+   Required function is used within the template to check if a variable in values.yaml is provided.
+   Throw error if variable not found or empty.
+
+   - usage:
+
+     #values.yaml 
+     favorite:
+       drink: coffe
+       food: pizza
+
+     #deployment.yaml 
+     apiVersion: v1
+     kind: ConfigMap
+     metadata:
+       name: {{ .Release.Name }}-configmap
+     data:
+       myvalue: "Hello World"
+       drink: {{ .Values.favorite.drink | quote }}
+       food: {{ .Values.favorite.food | quote }}
+       #time: {{ required "supply time values" .Values.favorite.time }}        #error karena tidak ada variable time di values.yaml
+       time: {{ required "supply time values" .Values.favorite.food }} 
+      
+    - output:
+
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: trendsetting-p-configmap
+      data:
+        myvalue: "Hello World"
+        drink: "coffee"
+        food: "pizza"
+        time: pizza
+
+7. default 
+
+   - usage:
+     #values.yaml 
+     favorite:
+       drink: coffe
+       food: pizza
+
+     #deployment.yaml 
+     apiVersion: v1
+     kind: ConfigMap
+     metadata:
+       name: {{ .Release.Name }}-configmap
+     data:
+       myvalue: "Hello World"
+       drink: {{ .Values.favorite.drink | quote }}
+       food: {{ .Values.favorite.food | lower | quote }}
+       time: {{ .Values.favorite.time | default "12.00 AM"}} 
+      
+    - output:
+
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: trendsetting-p-configmap
+      data:
+        myvalue: "Hello World"
+        drink: "coffee"
+        food: "pizza"
+        time: 12.00 AM
+
+8. indent 
+   The indent function adds a specified number of spaces to the beginning of each line in the given string. 
+   This does not consider the current level of indentation in the template where the function is used.
+   - usage:
+     
+     #_helpers.tpl
+     {{- define "mychart.fullname" -}}
+     {{- if .Values.fullnameOverride }}
+     {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+     {{- else }}
+     {{- $name := default .Chart.Name .Values.nameoverride }}
+     {{- if contains $name .Release.Name }}
+     {{- .Release.Name | trunc 63 | trimSuffix "-" }}
+     {{- else }}
+     {{- printf "%s-%s" .Release.Name | trunc 63 | trimSuffix "-"}}
+
+     #values.yaml 
+     favorite:
+       drink: coffe
+       food: pizza
+
+     #deployment.yaml 
+     apiVersion: v1
+     kind: ConfigMap
+     metadata:
+       name: {{- include "mychart.fullname" . | indent 6 }}
+
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: trendsetting-p-configmap
+
+9. nindent 
+   The nindent function is similar to indent, but it also considers the current indentation level of the template. 
+   It adds the specified number of spaces (N) to the beginning of each line in the string and aligns it with the current indentation level in the template.
+
+   - usage:
+     
+     #_helpers.tpl
+       {{- define "mychart.fullname" -}}
+     {{- if .Values.fullnameOverride }}
+     {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+     {{- else }}
+     {{- $name := default .Chart.Name .Values.nameoverride }}
+     {{- if contains $name .Release.Name }}
+     {{- .Release.Name | trunc 63 | trimSuffix "-" }}
+     {{- else }}
+     {{- printf "%s-%s" .Release.Name | trunc 63 | trimSuffix "-"}}
+
+     #values.yaml 
+     favorite:
+       drink: coffe
+       food: pizza
+
+     #deployment.yaml 
+     apiVersion: v1
+     kind: ConfigMap
+     metadata:
+       name: {{- include "mychart.fullname" . | nindent 4 }}
+
+   - output:
+     apiVersion: v1
+     kind: ConfigMap
+     metadata:
+       name: trendsetting-p-configmap
+
+---
+
+### Example Helm ###
+##create values
+vim values.yaml
+
+webapp:
+  numberOfWebAppReplicas: 4
+
+dockerRepoName: RapliMaulana
+
+##create yaml
+vim templates/rapli-full.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  test-pod-rapli
+  namespace: testing
+spec:
+  replicas: {{ .Values.webapp.numberOfWebAppReplicas }}
+  selector:
+    matchLabels:
+      app: test-pod-rapli
+  template:
+    metadata:
+      labels:
+        app: test-pod-rapli
+    spec:
+      containers:
+      - name: test-pod-rapli
+        image: {{ lower .Values.dockerRepoName }}/test-pod-rapli:v1.0.0-dev
+        #image: {{ default "raplimaulana" .Values.dockerRepoName }}/test-pod-rapli:v1.0.0-dev
+        #image: {{ .Values.dockerRepoName | upper }}/test-pod-rapli:v1.0.0-dev
+        #image: {{ .Values.dockerRepoName | default "raplimaulana" | upper }}/test-pod-rapli:v1.0.0-dev
+	    imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+          name: 80tcp
+          protocol: TCP
+        resources:
+          limits:
+            cpu: "4"
+            memory: 4Gi
+          requests:
+            cpu: 300m
+            memory: 512Mi
+      imagePullSecrets:
+      - name: pjli-hosting
+      restartPolicy: Always
+    restartPolicy: Always
+
+#create template 
+helm lint .
+helm template .
+
+---

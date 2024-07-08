@@ -1,0 +1,11 @@
+### ROLLBACK ###
+
+#check list helm revision
+helm list -a
+
+NAME        NAMESPACE   REVISION    UPDATED     STATUS
+monitoring  default     3           2024-07-05  deployed
+
+#rollback to spesific revision
+helm rollback monitoring 2
+

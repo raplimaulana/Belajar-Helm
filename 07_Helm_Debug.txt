@@ -1,0 +1,8 @@
+### HELM DEBUG ###
+you can use helm debug, if you want running helm chart without starting pod in kubernetes for testing.
+
+##helm debug
+mkdir my-cluster-config
+cd my-cluster-config
+helm pull prom-repo/prometheus --untar=true
+helm install monitoring --debug --dry-run /prometheus/

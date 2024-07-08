@@ -1,0 +1,154 @@
+### BUILT IN OBJECTS ###
+Object is a combination of data and procedures working on the available data.
+An object has a state and behaviour. The state of an object is stored in fileds (variables), while methods (function) display the objects's behaviour.
+
+1. Release 
+   The objects describes the release itself.
+   Example:
+   - Release.Name
+     The release name.
+
+     {{- .Release.Name | trunc 63 | trimSuffix "-" }}  
+
+   - Release.Namespace 
+     The namespace to be released into (if the manifest doesn’t override).
+
+   - Release.IsUpgrade
+     This is set to true if the current operation is an upgrade or rollback.
+
+   - Release.IsInstall 
+     This is set to true if the current operation is an install.
+
+   - Release.Revision 
+     The revision number for this release. On install, this is 1, and it is incremented with each upgrade and rollback.
+
+   - Release.Service 
+     The service that is rendering the present template. On Helm, this is always Helm.
+
+2. Chart 
+   The content of the chart.yaml file. Any data in chart.yaml will be accesible.
+   This file contains metadata about the chart, such as its name, version, and description.
+   It also includes information about the chart's dependencies.
+   This file is crucial for identifying the chart and its version, which helps in managing and updating the chart.
+
+   vim chart.yaml 
+
+   apiVersion: v2
+   name: mychart
+   description: A Helm chart for Kubernetes
+   version: 0.1.0
+   appVersion: 1.0.0
+   dependencies:
+     - name: nginx
+       version: 1.16.0
+       repository: "https://charts.bitnami.com/bitnami"
+   
+   ---
+
+   usage:
+
+   {{ .Chart.Name }}-{{ .Chart.Version }}
+
+   output: 
+
+   mychart-0.1.0
+
+3. Subcharts
+
+   mychart/
+     charts/
+       mySubChart.yaml
+   ...
+
+   usage:
+
+   .Subcharts.mySubChart.myValue
+
+3. Files 
+   This provides access to all non-special files in a chart.
+   Example:
+   - Files.Get
+     A function for getting a file by name.
+
+     vim conf.ini 
+
+     my conf
+     
+     ---
+
+     vim config.yaml
+
+     apiVersion:v1
+     kind: ConfigMap
+     metadata: 
+       name: {{ .Release.Name }}-configmap
+     data:
+       {{.Files.Get conf.ini}}
+
+  - Files.GetBytes  
+    A function for getting the contents of a file as an array of bytes instead of as a string. 
+    This is useful for things like images.
+
+  - Files.Glob 
+    A function that returns a list of files whose names match the given shell glob pattern.
+
+  - Files.Lines 
+    A function that reads a file line-by-line. 
+    This is useful for iterating over each line in a file.
+
+  - Files.AsSecrets 
+    A function that returns the file bodies as Base 64 encoded strings.
+
+  - Files.AsConfig 
+    A function that returns file bodies as a YAML map.
+
+4. Values
+   Values passed into template from the values.yaml file and from user-supplied files.
+   - vim values.yaml
+     ...
+     grafana 
+       service
+         portName: service
+         type: NodePort
+         nodePort:30008
+
+5. Capabilities
+   This provides information about what capabilities the kubernetes support
+   - Capabilities.APIVersions 
+     A set of versions.
+
+   - Capabilities.APIVersions.Has $version 
+     Indicates whether a version (e.g., batch/v1) or resource (e.g., apps/v1/Deployment) is available on the cluster.
+
+   - Capabilities.KubeVersion and Capabilities.KubeVersion.Version
+     Indicates Kubernetes version.
+
+   - Capabilities.KubeVersion.Major 
+     Indicates Kubernetes major version.
+
+   - Capabilities.KubeVersion.Minor 
+     Indicates Kubernetes minor version.
+
+   - Capabilities.HelmVersion 
+     Object containing the Helm Version details, it is the same output of helm version.
+
+  - Capabilities.HelmVersion.Version  
+    Current Helm version in semver format.
+
+  - Capabilities.HelmVersion.GitCommit 
+    Helm git sha1.
+
+  - Capabilities.HelmVersion.GitTreeState 
+    State of the Helm git tree.
+
+  - Capabilities.HelmVersion.GoVersion 
+    Version of the Go compiler used.
+
+6. Template 
+   Contains information about the current template that is being executed.
+
+   - Template.Name 
+     A namespaced file path to the current template (e.g. mychart/templates/mytemplate.yaml).
+
+   - Template.BasePath 
+     The namespaced path to the templates directory of the current chart (e.g. mychart/templates).

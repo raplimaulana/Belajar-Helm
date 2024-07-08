@@ -1,0 +1,106 @@
+### HELM REPO ###
+A Chart is a Helm package. It contains all of the resource definitions necessary to run an application, tool, or service inside of a Kubernetes cluster. 
+Think of it like the Kubernetes equivalent of a Homebrew formula, an Apt dpkg, or a Yum RPM file.
+
+A Repository is the place where charts can be collected and shared. 
+It's like Perl's CPAN archive or the Fedora Package Database, but for Kubernetes packages.
+
+A Release is an instance of a chart running in a Kubernetes cluster. 
+One chart can often be installed many times into the same cluster. And each time it is installed, a new release is created. Consider a MySQL chart. 
+If you want two databases running in your cluster, you can install that chart twice. Each one will have its own release, which will in turn have its own release name.
+
+With these concepts in mind, we can now explain Helm like this:
+Helm installs charts into Kubernetes, creating a new release for each installation. And to find new charts, you can search Helm chart repositories.
+
+##helm search
+1. helm search hub 
+   Searches the Artifact Hub (https://artifacthub.io/), which lists helm charts from dozens of different repositories.
+
+   helm search hub wordpress
+
+2. helm search repo 
+   Searches the repositories that you have added to your local helm client (with helm repo add). This search is done over local data, and no public network connection is needed.
+
+   helm repo add brigade https://brigadecore.github.io/charts
+   helm search repo brigade wordpress
+
+##install helm package
+helm install happy-panda bitnami/wordpress
+
+*name bitnami and happy-panda can change with any names
+
+##check status helm 
+helm status happy-panda
+helm status happy-panda --revision <number>   # if set, display the status of the named release with revision
+helm history happy-panda                      # Historical revisions for a given release.   
+
+##list all helm chart on local
+helm list
+helm list --all
+helm list --all-namespaces 
+helm -l key1=value1,key2=value2 # Selector (label query) to filter on, supports '=', '==', and '!='
+helm list --date                # Sort by release date
+helm list --deployed            # Show deployed releases. If no other is specified, this will be automatically enabled
+helm list --pending             # Show pending releases
+helm list --failed              # Show failed releases
+helm list --uninstalled         # Show uninstalled releases (if 'helm uninstall --keep-history' was used)
+helm list --superseded          # Show superseded releases
+helm list -o yaml               # Prints the output in the specified format. Allowed values: table, json, yaml (default table)
+
+##uninstall helm chart
+helm uninstall mysql
+
+##list all helm repo on local
+helm repo list
+
+##delete helm repo
+helm repo remove bitnami
+
+##download release information
+helm get all <release>      # A human readable collection of information about the notes, hooks, supplied values, and generated manifest file of the given release.
+helm get hooks <release>    # This command downloads hooks for a given release. Hooks are formatted in YAML and separated by the YAML '---\n' separator.
+helm get manifest <release> # A manifest is a YAML-encoded representation of the Kubernetes resources that were generated from this release's chart(s). If a chart is dependent on other charts, those resources will also be included in the manifest.
+helm get notes <release>    # Shows notes provided by the chart of a named release.
+helm get values <release>   # Downloads a values file for a given release. use -o to format output
+
+##plugin management
+helm plugin install <path/url1>     # Install plugins
+helm plugin list                    # View a list of all installed plugins
+helm plugin update <plugin>         # Update plugins
+helm plugin uninstall <plugin>      # Uninstall a plugin
+
+
+---
+
+
+### Example ##
+##add new helm chart
+1. MySQL
+   - from bitnami (old)
+     helm repo add bitnami https://charts.bitnami.com/bitnami
+
+     helm install my-release bitnami/mysql
+     helm install mysql bitnami/mysql
+
+     *name bitnami and my-reease can change with any names
+
+   - from bitnami 
+     helm install my-release oci://registry-1.docker.io/bitnamicharts/mysql
+
+2. Prometheus 
+   helm repo add prom-repo https://prometheus-community.github.io/helm-charts
+   helm repo update
+
+   helm install prometheus prom-repo/prometheus
+
+*go to https://artifacthub.io/ to find another helm chart
+
+##check if pod already running or not
+helm status prometheus
+kubectl get pod --all-namespaces
+kunectl get all
+kubectl get svc
+
+
+
+---

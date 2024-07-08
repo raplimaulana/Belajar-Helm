@@ -1,0 +1,159 @@
+### TEMPLATE FLOW CONTROL ###
+Control structures provide you the template author with ability to control the flow of a template's generation.
+
+1. If else
+   Creating conditional blocks.
+
+   {{ if PIPELINE }}
+     #do something
+   {{ else if OTHER_PIPELINE }}
+     #do something else 
+   {{ else }}
+     #default case 
+   {{ end }}
+
+   - usage:
+
+     #values.yaml 
+     favorite:
+       drink: coffe
+       food: pizza
+
+     #deployment.yaml 
+     apiVersion: v1
+     kind: ConfigMap
+     metadata:
+       name: {{ .Release.Name }}-configmap
+     data:
+       myvalue: "Hello World"
+       drink: {{ .Values.favorite.drink }}
+       food: {{ .Values.favorite.food }}
+       {{ if eq .Values.favorite.drink "coffe" }}                     #alternative use, {{ if eq .Values.favorite.drink "coffe" }}mug: true{{ end }}  
+       mug: true 
+       {{ end }}
+
+     data:
+       myvalue: "Hello World"
+       {{- with. .Values}}
+       drink: {{ .Values.favorite.drink | default "tea" | quote }}
+       food: {{ .Values.favorite.food | upper | quote }}
+       {{ if eq .Values.favorite.drink "coffee" }}
+         mug: true
+       {{ end }}
+
+2. with
+   Specify a scope.
+
+   - usage:
+
+     #values.yaml 
+     favorite:
+       drink: coffe
+       food: pizza
+
+     #deployment.yaml 
+     apiVersion: v1
+     kind: ConfigMap
+     metadata:
+       name: {{ .Release.name }}-configmap
+     data:
+       myvalue: "Hello World"
+       {{- with .Values.favorite }}
+       drink: {{ .drink | default "tea" | quote }}
+       food: {{ .food | upper | quote }}
+       {{- end }}
+
+       {{/* {{- with .Values.favorite }}
+       drink: {{ .drink | default "tea" | quote }}
+       food: {{ .food | upper | quote }}
+       {{- end }}
+       release: {{ .Release.Name }} */}}                                   #another code must after {{ end }} 
+
+3. range
+   Provides a "for each"-style loop
+
+   - usage:
+
+     #values.yaml 
+     favorite:
+       drink: coffe
+       food: pizza
+     pizzaTopings:
+       - mushroom
+       - cheese
+       - pepper
+
+     #deployment.yaml 
+     apiVersion: v1
+     kind: ConfigMap
+     metadata:
+       name: {{ .Release.Name }}-configmap
+     data:
+       myvalue: "Hello World"
+       {{- with .Values.favorite }}
+       drink: {{ .drink | default "tea" | quote }}
+       food: {{ .food | upper | quote }}
+       {{- end }}
+       toppings: |-
+         {{- range .Values.pizzaToppings }}
+         - {{ . | title | quote }}
+         {{- end }}
+
+
+---
+
+
+### Example Helm ###
+##create values
+vim values.yaml
+
+webapp:
+  numberOfWebAppReplicas: 4
+dockerRepoName: RapliMaulana
+environment: dev
+#environment: true
+
+##create yaml
+vim templates/rapli-full.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  test-pod-rapli
+  namespace: testing
+spec:
+  replicas: {{ .Values.webapp.numberOfWebAppReplicas }}
+  selector:
+    matchLabels:
+      app: test-pod-rapli
+  template:
+    metadata:
+      labels:
+        app: test-pod-rapli
+    spec:
+      containers:
+      - name: test-pod-rapli
+        image: {{ .Values.dockerRepoName | default "raplimaulana" | lower }}/test-pod-rapli:v1.0.0{{ if .Values.environment=="dev" }}-dev
+        #image: {{ .Values.dockerRepoName | default "raplimaulana" | lower }}/test-pod-rapli:v1.0.0{{ if eq .Values.environment "dev" }}-dev{{ end }}                       #cara ini tidak efektif karena tidak rapih
+        #image: {{ .Values.dockerRepoName | default "raplimaulana" | lower }}/test-pod-rapli:v1.0.0{{ if eq .Values.environment "dev" }}-dev{{ else }}-prod{{ end }} 
+        #image: {{ .Values.dockerRepoName | default "raplimaulana" | lower }}/test-pod-rapli:v1.0.0{{ if eq .Values.environment true }}-dev{{ end }}
+	    imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+          name: 80tcp
+          protocol: TCP
+        resources:
+          limits:
+            cpu: "4"
+            memory: 4Gi
+          requests:
+            cpu: 300m
+            memory: 512Mi
+      imagePullSecrets:
+      - name: pjli-hosting
+      restartPolicy: Always
+    restartPolicy: Always
+
+#create template 
+helm lint .
+helm template .

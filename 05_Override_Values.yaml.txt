@@ -1,0 +1,31 @@
+### OVERRIDE VALUES.YAML ###
+
+##Override values.yaml
+1. Set manual using helm upgrade
+   helm upgrade monitoring prom-repo/prometheus --set grafana.adminPassword=admin --set grafana.service.type=NodePort
+
+2. Update file values.yaml
+   - vim values.yaml
+     ...
+     grafana 
+       service
+         portName: service
+         type: NodePort
+         nodePort:30008
+     ...
+
+   - helm upgrade monitoring prom-repo/prometheus --values=values.yaml
+     helm upgrade monitoring prom-repo/prometheus -f values.yaml
+
+3. Crete another file values.yaml
+   - vim myvalues.yaml
+     ...
+     grafana 
+       service
+         portName: service
+         type: NodePort
+         nodePort:30008
+     ...
+
+   - helm upgrade monitoring prom-repo/prometheus --values=myvalues.yaml
+     helm upgrade monitoring prom-repo/prometheus -f myvalues.yaml

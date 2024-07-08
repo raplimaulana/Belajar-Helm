@@ -1,0 +1,31 @@
+### HELM PULL ###
+For avoiding snowflake clusters, we can download helm chart to our local using helm pull.
+This will download all content and we can update chart whatever we want.
+
+Example strurture helm chart:
+mychart/
+  Chart.yaml               #file contains a description of the chart. You can access it from within a template.
+  values.yaml              #This file contains the default values for a chart. These values may be overridden by users during helm install or helm upgrade.
+  charts/                  #directory may contain other charts (which we call subcharts).
+  templates/               #directory is for template files. When Helm evaluates a chart, it will send all of the files in the templates/ directory through the template rendering engine. It then collects the results of those templates and sends them on to Kubernetes.
+    NOTES.txt              #The "help text" for your chart. This will be displayed to your users when they run helm install.
+    deployment.yaml        #A basic manifest for creating a Kubernetes deployment
+    service.yaml           #A basic manifest for creating a service endpoint for your deployment
+    _helpers.tpl           #A place to put template helpers that you can re-use throughout the chart
+  ...
+
+
+##PULL HELM
+mkdir my-cluster-config
+cd my-cluster-config
+
+helm pull prom-repo/prometheus
+helm pull prom-repo/prometheus --untar=true
+helm pull prom-repo/prometheus --verify              # Verify the package before using it
+helm pull prom-repo/prometheus --version <number>
+
+helm install monitoring /prometheus/
+
+cd prometheus
+helm lint .                                         #for verification is template we created are working or not
+helm upgrade monitoring --values=values.yaml .

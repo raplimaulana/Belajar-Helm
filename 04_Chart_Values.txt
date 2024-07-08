@@ -1,0 +1,14 @@
+### CHART VALUES ###
+
+##list all chart value from helm chart
+helm show values bitnami/mysql
+helm show values bitnami/mysql | grep Password
+helm show values bitnami/mysql | grep -i password
+helm show values bitnami/mysql > values.yaml        #convert into yaml file, but output only and can't applied to kubernetes
+
+
+##set values to running helm chart
+helm upgrade prometheus prom-repo/prometheus --set grafana.adminPassword=admin      #variable adminPassword ada di parent grafana pada values.yaml
+
+*jika perubahannya benar, akan terbuat pod baru
+

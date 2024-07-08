@@ -1,0 +1,104 @@
+### NAMED TEMPLATES ###
+A named template (sometimes called a partial or a subtemplate) is simply a template defined inside of a file, and given a name.
+
+---
+### Example Helm ###
+###problem 
+##create yaml
+vim templates/rapli-full.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  test-pod-rapli
+  namespace: testing
+spec:
+  replicas: {{ .Values.webapp.numberOfWebAppReplicas }}
+  selector:
+    matchLabels:
+      app: test-pod-rapli
+  template:
+    metadata:
+      labels:
+        app: test-pod-rapli
+    spec:
+      containers:
+      #bagian ini di hapus
+
+##test debug
+helm template . debug
+
+*akan error karena tidak ada yaml yang seharusnya diisi tapi tidak diisi
+
+---
+###solving 1
+##create templates
+vim templates/_common-blocks.tpl
+
+      - name: test-pod-rapli
+        image: {{ .Values.dockerRepoName | default "raplimaulana" | lower }}/test-pod-rapli:v1.0.0{{ if eq .Values.environment true }}-dev{{ end }}
+	    imagePullPolicy: Always
+
+{{ define "test-pod-rapli-image" }}
+      - name: test-pod-rapli
+        image: {{ .Values.dockerRepoName | default "raplimaulana" | lower }}/test-pod-rapli:v1.0.0{{ if eq .Values.environment true }}-dev{{ end }}
+	    imagePullPolicy: Always
+{{ end }}                               #jadi problem karena harus spesifikan spasi (indentasi), kalo salah spasi akan error
+
+{{- define "test-pod-rapli-image" }}
+      - name: test-pod-rapli
+        image: {{ .Values.dockerRepoName | default "raplimaulana" | lower }}/test-pod-rapli:v1.0.0{{ if eq .Values.environment true }}-dev{{ end }}
+	    imagePullPolicy: Always
+{{- end }} 
+
+##create values
+vim values.yaml
+
+webapp:
+  numberOfWebAppReplicas: 4
+dockerRepoName: RapliMaulana
+environment: dev
+
+##create yaml
+vim templates/rapli-full.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  test-pod-rapli
+  namespace: testing
+spec:
+  replicas: {{ .Values.webapp.numberOfWebAppReplicas }}
+  selector:
+    matchLabels:
+      app: test-pod-rapli
+  template:
+    metadata:
+      labels:
+        app: test-pod-rapli
+    spec:
+      containers:
+      {{ template "test-pod-rapli-image" .Values }}
+      #{{ template "test-pod-rapli-image" . }}
+                    #{{- template "test-pod-rapli-image" . }}             #bisa di spasi berapa aja tanpa khwatir error 
+                                                                          #tapi jadi problem karena dimanapun tempatnya, hasilnya akan selalu sama karena di harcode di _common-blocks.yaml 
+      #{{- template "test-pod-rapli-image" . | indent 6}}
+        ports:
+        - containerPort: 80
+          name: 80tcp
+          protocol: TCP
+        resources:
+          limits:
+            cpu: "4"
+            memory: 4Gi
+          requests:
+            cpu: 300m
+            memory: 512Mi
+      imagePullSecrets:
+      - name: pjli-hosting
+      restartPolicy: Always
+    restartPolicy: Always
+
+#create template 
+helm lint .
+helm template .
